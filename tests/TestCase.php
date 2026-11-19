@@ -7,6 +7,7 @@ namespace Oneduo\NovaFileManager\Tests;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Inertia\ServiceProvider;
+use Intervention\Image\Laravel\ServiceProvider as ImageServiceProvider;
 use Laravel\Nova\NovaApplicationServiceProvider;
 use Laravel\Nova\NovaCoreServiceProvider;
 use Laravel\Nova\NovaServiceProvider;
@@ -20,6 +21,7 @@ class TestCase extends Orchestra
     {
         return [
             ChunkUploadServiceProvider::class,
+            ImageServiceProvider::class,
             ServiceProvider::class,
             NovaCoreServiceProvider::class,
             NovaApplicationServiceProvider::class,

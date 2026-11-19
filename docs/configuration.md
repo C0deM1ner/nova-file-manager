@@ -153,3 +153,13 @@ Toggle whether an upload with an existing file name should replace the existing 
 |--------|---------|
 | `bool` | `false` |
 
+## `image_conversion`
+
+Converts uploaded images to another format using [intervention/image](https://image.intervention.io). Only files whose mime type is listed in `mime_types` are converted, and the file extension is replaced with the target format, e.g. `photo.jpg` is stored as `photo.webp`.
+
+| Key          | Type     | Default                                     | Env                                          |
+|--------------|----------|---------------------------------------------|----------------------------------------------|
+| `enabled`    | `bool`   | `true`                                      | `NOVA_FILE_MANAGER_IMAGE_CONVERSION_ENABLED` |
+| `format`     | `string` | `webp`                                      | `NOVA_FILE_MANAGER_IMAGE_CONVERSION_FORMAT`  |
+| `quality`    | `int`    | `90`                                        | `NOVA_FILE_MANAGER_IMAGE_CONVERSION_QUALITY` |
+| `mime_types` | `array`  | `['image/jpeg', 'image/png', 'image/bmp']`  |                                              |

@@ -195,4 +195,26 @@ return [
 
     'upload_replace_existing' => (bool) env('NOVA_FILE_MANAGER_UPLOAD_REPLACE_EXISTING', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Image conversion
+    |--------------------------------------------------------------------------
+    |
+    | Uploaded images matching one of the mime types are converted to the given
+    | format using intervention/image. The file extension is replaced with the
+    | target format, e.g. "photo.jpg" is stored as "photo.webp".
+    |
+    */
+
+    'image_conversion' => [
+        'enabled' => (bool) env('NOVA_FILE_MANAGER_IMAGE_CONVERSION_ENABLED', true),
+        'format' => env('NOVA_FILE_MANAGER_IMAGE_CONVERSION_FORMAT', 'webp'),
+        'quality' => (int) env('NOVA_FILE_MANAGER_IMAGE_CONVERSION_QUALITY', 90),
+        'mime_types' => [
+            'image/jpeg',
+            'image/png',
+            'image/bmp',
+        ],
+    ],
+
 ];

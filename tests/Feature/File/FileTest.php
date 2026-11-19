@@ -33,8 +33,8 @@ it('can upload file to the root folder', function () {
         data: [
             'disk' => $this->disk,
             'path' => '/',
-            'file' => UploadedFile::fake()->image($path = 'image.jpeg'),
-            'resumableFilename' => $path,
+            'file' => UploadedFile::fake()->image('image.jpeg'),
+            'resumableFilename' => 'image.jpeg',
         ],
     )
         ->assertOk()
@@ -42,7 +42,9 @@ it('can upload file to the root folder', function () {
             'message' => __('nova-file-manager::messages.file.upload'),
         ]);
 
-    Storage::disk($this->disk)->assertExists($path);
+    Storage::disk($this->disk)->assertExists($path = 'image.webp');
+    Storage::disk($this->disk)->assertMissing('image.jpeg');
+    expect(Storage::disk($this->disk)->mimeType($path))->toBe('image/webp');
 
     Event::assertDispatched(
         event: FileUploading::class,
@@ -82,7 +84,7 @@ it('can upload file to a nested folder', function () {
             'message' => __('nova-file-manager::messages.file.upload'),
         ]);
 
-    Storage::disk($this->disk)->assertExists($path = "{$folder}/{$file}");
+    Storage::disk($this->disk)->assertExists($path = "{$folder}/image.webp");
 
     Event::assertDispatched(
         event: FileUploading::class,
@@ -101,6 +103,45 @@ it('can upload file to a nested folder', function () {
                 && $event->path === $path;
         },
     );
+});
+
+it('keeps the original image when image conversion is disabled', function () {
+    config()->set('nova-file-manager.image_conversion.enabled', false);
+
+    postJson(
+        uri: route('nova-file-manager.files.upload'),
+        data: [
+            'disk' => $this->disk,
+            'path' => '/',
+            'file' => UploadedFile::fake()->image($path = 'image.jpeg'),
+            'resumableFilename' => $path,
+        ],
+    )->assertOk();
+
+    Storage::disk($this->disk)->assertExists($path);
+    Storage::disk($this->disk)->assertMissing('image.webp');
+});
+
+it('cannot upload an image when the converted file name already exists and upload_replace_existing is false', function () {
+    config()->set('nova-file-manager.upload_replace_existing', false);
+
+    Storage::disk($this->disk)->put($existing = 'image.webp', $content = Str::random());
+
+    postJson(
+        uri: route('nova-file-manager.files.upload'),
+        data: [
+            'disk' => $this->disk,
+            'path' => '/',
+            'file' => UploadedFile::fake()->image('image.jpeg'),
+            'resumableFilename' => 'image.jpeg',
+        ],
+    )
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors([
+            'file' => [__('nova-file-manager::validation.path.exists', ['path' => $existing])],
+        ]);
+
+    expect(Storage::disk($this->disk)->get($existing))->toBe($content);
 });
 
 it('can prevent folder creation on upload', function () {

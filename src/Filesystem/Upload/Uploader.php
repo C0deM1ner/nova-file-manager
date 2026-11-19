@@ -6,6 +6,7 @@ namespace Oneduo\NovaFileManager\Filesystem\Upload;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
+use Intervention\Image\Laravel\Facades\Image;
 use Oneduo\NovaFileManager\Contracts\Filesystem\Upload\Uploader as UploaderContract;
 use Oneduo\NovaFileManager\Events\FileUploaded;
 use Oneduo\NovaFileManager\Events\FileUploading;
@@ -58,20 +59,49 @@ class Uploader implements UploaderContract
 
         $folderPath = dirname($request->filePath());
         $filePath = $file->getClientOriginalName();
+        $converted = null;
+
+        if ($this->shouldConvert($file)) {
+            $format = config('nova-file-manager.image_conversion.format');
+            $filePath = pathinfo($filePath, PATHINFO_FILENAME).'.'.$format;
+            $converted = Image::decodePath($file->getRealPath())
+                ->encodeUsingFileExtension($format, quality: (int) config('nova-file-manager.image_conversion.quality'))
+                ->toString();
+        }
+
         $testPath = ltrim(str_replace('//', '/', "{$folderPath}/{$filePath}"), '/');
+        $filesystem = $request->manager()->filesystem();
 
-        event(new FileUploading($request->manager()->filesystem(), $request->manager()->getDisk(), $testPath));
+        // The request only validated the original name, the converted name may already exist.
+        if ($converted !== null && !$request->element()->resolveUploadReplaceExisting($request) && $filesystem->exists($testPath)) {
+            throw ValidationException::withMessages([
+                'file' => [__('nova-file-manager::validation.path.exists', ['path' => $testPath])],
+            ]);
+        }
 
-        $path = $request->manager()->filesystem()->putFileAs(
-            path: $folderPath,
-            file: $file,
-            name: $filePath,
-        );
+        event(new FileUploading($filesystem, $request->manager()->getDisk(), $testPath));
 
-        event(new FileUploaded($request->manager()->filesystem(), $request->manager()->getDisk(), $path));
+        if ($converted === null) {
+            $path = $filesystem->putFileAs(
+                path: $folderPath,
+                file: $file,
+                name: $filePath,
+            );
+        } else {
+            $filesystem->put($testPath, $converted);
+            $path = $testPath;
+        }
+
+        event(new FileUploaded($filesystem, $request->manager()->getDisk(), $path));
 
         return [
             'message' => __('nova-file-manager::messages.file.upload'),
         ];
+    }
+
+    protected function shouldConvert(UploadedFile $file): bool
+    {
+        return config('nova-file-manager.image_conversion.enabled')
+            && in_array($file->getMimeType(), config('nova-file-manager.image_conversion.mime_types', []), true);
     }
 }

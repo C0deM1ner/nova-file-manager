@@ -151,7 +151,7 @@ const copy = (file: Entity) => {
             <PencilSquareIcon class="w-5 h-5" />
           </IconButton>
 
-          <IconButton ref="buttonRef" @click.self="closePreview" :title="__('NovaFileManager.actions.close')">
+          <IconButton ref="buttonRef" @click="closePreview" :title="__('NovaFileManager.actions.close')">
             <XMarkIcon class="w-5 h-5" />
           </IconButton>
 

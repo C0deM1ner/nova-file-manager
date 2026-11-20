@@ -6,6 +6,8 @@ namespace Oneduo\NovaFileManager\Filesystem\Upload;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
+use Intervention\Image\Encoders\FileExtensionEncoder;
+use Intervention\Image\Interfaces\ImageInterface;
 use Intervention\Image\Laravel\Facades\Image;
 use Oneduo\NovaFileManager\Contracts\Filesystem\Upload\Uploader as UploaderContract;
 use Oneduo\NovaFileManager\Events\FileUploaded;
@@ -64,8 +66,8 @@ class Uploader implements UploaderContract
         if ($this->shouldConvert($file)) {
             $format = config('nova-file-manager.image_conversion.format');
             $filePath = pathinfo($filePath, PATHINFO_FILENAME).'.'.$format;
-            $converted = Image::decodePath($file->getRealPath())
-                ->encodeUsingFileExtension($format, quality: (int) config('nova-file-manager.image_conversion.quality'))
+            $converted = $this->decodeImage($file->getRealPath())
+                ->encode(new FileExtensionEncoder($format, quality: (int) config('nova-file-manager.image_conversion.quality')))
                 ->toString();
         }
 
@@ -103,5 +105,13 @@ class Uploader implements UploaderContract
     {
         return config('nova-file-manager.image_conversion.enabled')
             && in_array($file->getMimeType(), config('nova-file-manager.image_conversion.mime_types', []), true);
+    }
+
+    // intervention/image v4 renamed read() to decodePath()
+    protected function decodeImage(string $path): ImageInterface
+    {
+        $manager = Image::getFacadeRoot();
+
+        return method_exists($manager, 'decodePath') ? $manager->decodePath($path) : $manager->read($path);
     }
 }

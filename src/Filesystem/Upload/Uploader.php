@@ -6,9 +6,10 @@ namespace Oneduo\NovaFileManager\Filesystem\Upload;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Encoders\FileExtensionEncoder;
+use Intervention\Image\ImageManager;
 use Intervention\Image\Interfaces\ImageInterface;
-use Intervention\Image\Laravel\Facades\Image;
 use Oneduo\NovaFileManager\Contracts\Filesystem\Upload\Uploader as UploaderContract;
 use Oneduo\NovaFileManager\Events\FileUploaded;
 use Oneduo\NovaFileManager\Events\FileUploading;
@@ -107,11 +108,13 @@ class Uploader implements UploaderContract
             && in_array($file->getMimeType(), config('nova-file-manager.image_conversion.mime_types', []), true);
     }
 
-    // intervention/image v4 renamed read() to decodePath()
     protected function decodeImage(string $path): ImageInterface
     {
-        $manager = Image::getFacadeRoot();
+        // Laravel 13 binds its own image manager to the "image" key used by the intervention/image-laravel v1 facade,
+        // and intervention/image-laravel v1 does not bind ImageManager::class.
+        $manager = app()->bound(ImageManager::class) ? app(ImageManager::class) : new ImageManager(GdDriver::class);
 
+        // intervention/image v4 renamed read() to decodePath()
         return method_exists($manager, 'decodePath') ? $manager->decodePath($path) : $manager->read($path);
     }
 }

@@ -155,11 +155,13 @@ Toggle whether an upload with an existing file name should replace the existing 
 
 ## `image_conversion`
 
-Converts uploaded images to another format using [intervention/image](https://image.intervention.io). Only files whose mime type is listed in `mime_types` are converted, and the file extension is replaced with the target format, e.g. `photo.jpg` is stored as `photo.webp`.
+Converts uploaded images to another format and scales them down to fit `max_width` × `max_height` (`0` means no limit). The browser converts images before uploading them, so the server never has to decode large images; the server converts with [intervention/image](https://image.intervention.io) only the images the browser could not. Only files whose mime type is listed in `mime_types` are converted, and the file extension is replaced with the target format, e.g. `photo.jpg` is stored as `photo.webp`.
 
 | Key          | Type     | Default                                     | Env                                          |
 |--------------|----------|---------------------------------------------|----------------------------------------------|
 | `enabled`    | `bool`   | `true`                                      | `NOVA_FILE_MANAGER_IMAGE_CONVERSION_ENABLED` |
 | `format`     | `string` | `webp`                                      | `NOVA_FILE_MANAGER_IMAGE_CONVERSION_FORMAT`  |
 | `quality`    | `int`    | `90`                                        | `NOVA_FILE_MANAGER_IMAGE_CONVERSION_QUALITY` |
+| `max_width`  | `int`    | `2560`                                      | `NOVA_FILE_MANAGER_IMAGE_CONVERSION_MAX_WIDTH` |
+| `max_height` | `int`    | `2560`                                      | `NOVA_FILE_MANAGER_IMAGE_CONVERSION_MAX_HEIGHT` |
 | `mime_types` | `array`  | `['image/jpeg', 'image/png', 'image/bmp']`  |                                              |

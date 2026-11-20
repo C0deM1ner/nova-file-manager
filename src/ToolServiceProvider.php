@@ -32,6 +32,12 @@ class ToolServiceProvider extends ServiceProvider
         Nova::serving(function () {
             $this->loadTranslationsToNova();
             $this->assets();
+
+            Nova::provideToScript([
+                'novaFileManager' => [
+                    'imageConversion' => config('nova-file-manager.image_conversion'),
+                ],
+            ]);
         });
     }
 

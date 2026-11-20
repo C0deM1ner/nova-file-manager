@@ -201,8 +201,10 @@ return [
     |--------------------------------------------------------------------------
     |
     | Uploaded images matching one of the mime types are converted to the given
-    | format using intervention/image. The file extension is replaced with the
-    | target format, e.g. "photo.jpg" is stored as "photo.webp".
+    | format and scaled down to fit max_width x max_height (0 = no limit). The
+    | browser does this before uploading; the server only converts images the
+    | browser could not. The file extension is replaced with the target format,
+    | e.g. "photo.jpg" is stored as "photo.webp".
     |
     */
 
@@ -210,6 +212,8 @@ return [
         'enabled' => (bool) env('NOVA_FILE_MANAGER_IMAGE_CONVERSION_ENABLED', true),
         'format' => env('NOVA_FILE_MANAGER_IMAGE_CONVERSION_FORMAT', 'webp'),
         'quality' => (int) env('NOVA_FILE_MANAGER_IMAGE_CONVERSION_QUALITY', 90),
+        'max_width' => (int) env('NOVA_FILE_MANAGER_IMAGE_CONVERSION_MAX_WIDTH', 2560),
+        'max_height' => (int) env('NOVA_FILE_MANAGER_IMAGE_CONVERSION_MAX_HEIGHT', 2560),
         'mime_types' => [
             'image/jpeg',
             'image/png',

@@ -68,6 +68,10 @@ class Uploader implements UploaderContract
             $format = config('nova-file-manager.image_conversion.format');
             $filePath = pathinfo($filePath, PATHINFO_FILENAME).'.'.$format;
             $converted = $this->decodeImage($file->getRealPath())
+                ->scaleDown(
+                    width: config('nova-file-manager.image_conversion.max_width') ?: null,
+                    height: config('nova-file-manager.image_conversion.max_height') ?: null,
+                )
                 ->encode(new FileExtensionEncoder($format, quality: (int) config('nova-file-manager.image_conversion.quality')))
                 ->toString();
         }
@@ -110,8 +114,7 @@ class Uploader implements UploaderContract
 
     protected function decodeImage(string $path): ImageInterface
     {
-        // Laravel 13 binds its own image manager to the "image" key used by the intervention/image-laravel v1 facade,
-        // and intervention/image-laravel v1 does not bind ImageManager::class.
+        // Uses the app's configured manager when intervention/image-laravel v4 is installed.
         $manager = app()->bound(ImageManager::class) ? app(ImageManager::class) : new ImageManager(GdDriver::class);
 
         // intervention/image v4 renamed read() to decodePath()

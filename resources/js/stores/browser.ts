@@ -27,6 +27,7 @@ import {
   UPLOAD_MODAL_NAME,
 } from '@/constants'
 import attempt from '@/helpers/attempt'
+import convertImage from '@/helpers/convert-image'
 import { client } from '@/helpers/client'
 import { csrf } from '@/helpers/csrf'
 import sanitize from '@/helpers/sanitize'
@@ -584,8 +585,10 @@ const useBrowserStore = defineStore('nova-file-manager/browser', {
       })
     },
 
-    upload({ files }: { files: File[] }) {
+    async upload({ files }: { files: File[] }) {
       this.isUploading = true
+
+      files = await Promise.all(files.map(convertImage));
 
       const uploader = new Resumable({
         permanentErrors: [400, 404, 409, 415, 419, 422, 500, 501],
